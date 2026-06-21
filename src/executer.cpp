@@ -7,12 +7,21 @@
 
 #include "builtins.hpp"
 
-    void Executer::execute(std::vector<std::string>& tokens) {
+void Executer::execute(std::vector<std::string>& tokens) {
     if (Builtins::handle(tokens)) {
         return;
     }
 
     std::string outputFile;
+    bool background = false;
+
+    for (size_t i = 0; i < tokens.size(); i++) {
+        if (tokens[i] == "&") {
+            background = true;
+            tokens.erase(tokens.begin() + i);
+            break;
+        }
+    }
 
     for (size_t i = 0; i < tokens.size(); i++) {
         if (tokens[i] == ">") {
@@ -36,25 +45,14 @@
 
     if (pid < 0) {
         std::cerr << tokens[0] << ": failed to execute command" << std::endl;
-    }
-    else if (pid == 0) {
-
+    } else if (pid == 0) {
         if (!outputFile.empty()) {
-            int file_fd = open(outputFile.c_str(),
-                               O_WRONLY | O_CREAT | O_TRUNC,
-                               0644);
-
-            if (file_fd < 0) {
-                perror("open");
-                exit(1);
-            }
-
+            int file_fd = open(outputFile.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
             dup2(file_fd, STDOUT_FILENO);
             close(file_fd);
         }
 
-        int status = execvp(argv[0],
-                            const_cast<char* const*>(argv.data()));
+        int status = execvp(argv[0], const_cast<char* const*>(argv.data()));
 
         if (status != 0) {
             std::string msg = "failed to execute command";
@@ -65,9 +63,9 @@
 
             std::cerr << tokens[0] << ": " << msg << std::endl;
         }
+    } else {
+        if (!background) {
+            waitpid(pid, nullptr, 0);
+        }
     }
-    else {
-        waitpid(pid, nullptr, 0);
-    }
-}     
-       
+}
