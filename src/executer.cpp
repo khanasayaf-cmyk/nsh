@@ -14,6 +14,20 @@ void Executer::execute(std::vector<std::string>& tokens) {
 
     std::string outputFile;
     bool background = false;
+static std::vector<std::string> history;
+
+std::string command = "";
+for (const auto& token : tokens) {
+    command += token + " ";
+}
+history.push_back(command);
+
+if (tokens[0] == "history") {
+    for (size_t i = 0; i < history.size(); i++) {
+        std::cout << i + 1 << ": " << history[i] << std::endl;
+    }
+    return;
+}
 
     for (size_t i = 0; i < tokens.size(); i++) {
         if (tokens[i] == "&") {
